@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JD Analyzer — AI Recruiting Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap');
+  :root {
+    --bg: #0d0f14; --surface: #13161d; --surface2: #1a1e28; --border: #252a38;
+    --accent: #4f8ef7; --accent2: #7c5cbf; --green: #3dd68c; --amber: #f5a623;
+    --text: #e8eaf0; --muted: #6b7280;
+    --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; line-height: 1.6; }
+  header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; position: sticky; top: 0; background: rgba(13,15,20,0.95); z-index: 100; }
+  .logo { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .badge { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--green); border: 1px solid var(--green); padding: 3px 8px; border-radius: 3px; }
+  .hero { padding: 64px 32px 48px; max-width: 860px; margin: 0 auto; text-align: center; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 20px; }
+  h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; }
+  h1 em { font-style: normal; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .sub { color: var(--muted); font-size: 16px; max-width: 540px; margin: 0 auto 40px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 32px 48px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .card-top { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  #jdInput { width: 100%; background: transparent; border: none; color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.7; padding: 20px; resize: vertical; outline: none; min-height: 240px; display: block; }
+  .card-bot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  #charCount { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  #analyzeBtn { background: var(--accent); color: #fff; border: none; padding: 10px 28px; border-radius: 6px; font-family: var(--mono); font-size: 13px; font-weight: 700; cursor: pointer; }
+  #analyzeBtn:hover { background: #3d7ef5; }
+  #analyzeBtn:disabled { background: #333; color: #666; cursor: not-allowed; }
+  #loading { display: none; max-width: 860px; margin: 0 auto; padding: 0 32px 48px; }
+  .spin-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 48px; text-align: center; }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin-text { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  #results { display: none; max-width: 860px; margin: 0 auto; padding: 0 32px 80px; flex-direction: column; gap: 20px; }
+  #results.show { display: flex; }
+  .rc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 4px; }
+  .rh { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .rt { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .tag { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; }
+  .tb { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .tg { background: rgba(61,214,140,0.15); color: var(--green); }
+  .ta { background: rgba(245,166,35,0.15); color: #f5a623; }
+  .tp { background: rgba(124,92,191,0.15); color: var(--accent2); }
+  .cpbtn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 5px; font-family: var(--mono); font-size: 10px; cursor: pointer; }
+  .cpbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .rb { padding: 20px; }
+  .pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pb h4 { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .pb ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .pb ul li { font-size: 13px; padding-left: 14px; position: relative; }
+  .pb ul li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-size: 11px; }
+  .bb { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .bl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .bs { font-family: var(--mono); font-size: 12px; color: var(--green); line-height: 1.6; word-break: break-word; }
+  .cgrid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-size: 13px; font-family: var(--mono); }
+  .si { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .si:last-child { border-bottom: none; }
+  .sn { font-family: var(--mono); font-size: 11px; color: var(--accent); min-width: 24px; padding-top: 2px; }
+  .sc h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .sc p { font-size: 13px; color: var(--muted); }
+  .ob { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+  .reset-row { text-align: center; padding: 8px 0 20px; }
+  .rbtn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 10px 24px; border-radius: 6px; font-family: var(--mono); font-size: 12px; cursor: pointer; }
+  footer { border-top: 1px solid var(--border); padding: 24px 32px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">jd<span>.</span>analyzer<span>()</span></div>
+  <div class="badge">● AI POWERED</div>
+</header>
+<div class="hero">
+  <div class="eyebrow">// recruiting intelligence tool</div>
+  <h1>Turn any Job Description into a<br><em>complete sourcing strategy</em></h1>
+  <p class="sub">Paste a JD. Get an ideal candidate profile, Boolean search strings, target companies, and a personalized outreach message — in seconds.</p>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="card-top">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span style="margin-left:8px">paste_jd.txt</span>
+    </div>
+    <textarea id="jdInput" placeholder="Paste your job description here..."></textarea>
+    <div class="card-bot">
+      <span id="charCount">0 characters</span>
+      <button id="analyzeBtn">⚡ Analyze JD</button>
+    </div>
+  </div>
+</div>
+<div id="loading">
+  <div class="spin-wrap">
+    <div class="spinner"></div>
+    <div class="spin-text">Analyzing your JD with AI...</div>
+  </div>
+</div>
+<div id="results">
+  <div class="rc">
+    <div class="rh"><div class="rt">👤 Ideal Candidate Profile <span class="tag tb">PROFILE</span></div><button class="cpbtn" data-target="profileContent">Copy</button></div>
+    <div class="rb"><div class="pgrid" id="profileContent"></div></div>
+  </div>
+  <div class="rc">
+    <div class="rh"><div class="rt">🔍 Boolean Search Strings <span class="tag tg">SEARCH</span></div><button class="cpbtn" data-target="booleanContent">Copy</button></div>
+    <div class="rb" id="booleanContent"></div>
+  </div>
+  <div class="rc">
+    <div class="rh"><div class="rt">🏢 Target Companies <span class="tag ta">TARGETS</span></div><button class="cpbtn" data-target="companiesContent">Copy</button></div>
+    <div class="rb"><div class="cgrid" id="companiesContent"></div></div>
+  </div>
+  <div class="rc">
+    <div class="rh"><div class="rt">🗺 Sourcing Strategy <span class="tag tp">STRATEGY</span></div><button class="cpbtn" data-target="strategyContent">Copy</button></div>
+    <div class="rb" id="strategyContent"></div>
+  </div>
+  <div class="rc">
+    <div class="rh"><div class="rt">✉️ Outreach Message <span class="tag tb">OUTREACH</span></div><button class="cpbtn" data-target="outreachContent">Copy</button></div>
+    <div class="rb"><div class="ob" id="outreachContent"></div></div>
+  </div>
+  <div class="reset-row"><button class="rbtn" id="resetBtn">← Analyze another JD</button></div>
+</div>
+<footer>
+  Built by <a href="https://linkedin.com/in/manjunath-h" target="_blank">Manjunath H.</a> · Technical Recruiter & AI Tools Builder ·
+  <a href="https://github.com/Manju-ta/jd-analyzer" target="_blank">github.com/Manju-ta/jd-analyzer</a>
+</footer>
+<script>
+(function() {
+  var inp = document.getElementById('jdInput');
+  var btn = document.getElementById('analyzeBtn');
+  var countEl = document.getElementById('charCount');
+  var loading = document.getElementById('loading');
+  var results = document.getElementById('results');
+  var resetBtn = document.getElementById('resetBtn');
+
+  function updateCount() {
+    var n = inp.value.length;
+    countEl.textContent = n + ' characters';
+  }
+
+  inp.addEventListener('input', updateCount);
+  inp.addEventListener('keyup', updateCount);
+  inp.addEventListener('change', updateCount);
+  inp.addEventListener('paste', function() { setTimeout(updateCount, 200); });
+
+  btn.addEventListener('click', function() {
+    var jd = inp.value.trim();
+    if (!jd) { alert('Please paste a job description first.'); return; }
+    btn.disabled = true;
+    loading.style.display = 'block';
+    results.classList.remove('show');
+
+    fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jd: jd })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loading.style.display = 'none';
+      if (data.error) { alert('Error: ' + data.error); btn.disabled = false; return; }
+      render(data);
+      results.classList.add('show');
+      results.scrollIntoView({ behavior: 'smooth' });
+      btn.disabled = false;
+    })
+    .catch(function(e) {
+      loading.style.display = 'none';
+      alert('Something went wrong. Please try again.');
+      btn.disabled = false;
+    });
+  });
+
+  resetBtn.addEventListener('click', function() {
+    results.classList.remove('show');
+    inp.value = '';
+    updateCount();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  document.querySelectorAll('.cpbtn').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var el = document.getElementById(b.getAttribute('data-target'));
+      navigator.clipboard.writeText(el.innerText || el.textContent).then(function() {
+        b.textContent = 'Copied!';
+        setTimeout(function() { b.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+
+  function render(r) {
+    document.getElementById('profileContent').innerHTML =
+      '<div class="pb"><h4>Must-Have Skills</h4><ul>' + (r.mustHaveSkills||[]).map(function(s){return '<li>'+s+'</li>';}).join('') + '</ul></div>' +
+      '<div class="pb"><h4>Nice to Have</h4><ul>' + (r.niceToHaveSkills||[]).map(function(s){return '<li>'+s+'</li>';}).join('') + '</ul></div>' +
+      '<div class="pb"><h4>Experience Level</h4><ul><li>' + (r.experienceLevel||'') + '</li></ul></div>' +
+      '<div class="pb"><h4>Ideal Background</h4><ul>' + (r.idealBackground||[]).map(function(s){return '<li>'+s+'</li>';}).join('') + '</ul></div>' +
+      '<div class="pb" style="grid-column:1/-1"><h4>Red Flags</h4><ul>' + (r.redFlags||[]).map(function(s){return '<li>'+s+'</li>';}).join('') + '</ul></div>';
+
+    document.getElementById('booleanContent').innerHTML = (r.booleans||[]).map(function(b){
+      return '<div class="bb"><div class="bl">'+b.label+'</div><div class="bs">'+b.string+'</div></div>';
+    }).join('');
+
+    document.getElementById('companiesContent').innerHTML = (r.targetCompanies||[]).map(function(c){
+      return '<div class="chip">'+c+'</div>';
+    }).join('');
+
+    document.getElementById('strategyContent').innerHTML = '<div>' + (r.sourcingStrategy||[]).map(function(s,i){
+      return '<div class="si"><div class="sn">0'+(i+1)+'</div><div class="sc"><h4>'+s.title+'</h4><p>'+s.detail+'</p></div></div>';
+    }).join('') + '</div>';
+
+    document.getElementById('outreachContent').textContent = r.outreachMessage || '';
+  }
+})();
+</script>
+</body>
+</html>
