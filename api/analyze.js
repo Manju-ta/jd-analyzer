@@ -4,49 +4,44 @@ export default async function handler(req, res) {
   }
 
   const { jd } = req.body;
+  if (!jd) return res.status(400).json({ error: 'No JD provided' });
 
-  if (!jd || jd.length < 10) {
-    return res.status(400).json({ error: 'JD too short' });
-  }
-
-  const prompt = `You are an expert technical recruiter. Analyze this job description and return ONLY a valid JSON object — no markdown, no backticks, no explanation. Be concise; keep each string short.
+  const prompt = `You are an expert technical recruiter. Analyze this job description and return ONLY a valid JSON object — no markdown, no backticks, no explanation.
 
 Keys required:
-- mustHaveSkills: array of 5 strings (short, e.g. "Golang", "Kubernetes")
+- mustHaveSkills: array of 5 short strings
 - niceToHaveSkills: array of 4 short strings
 - experienceLevel: single short string e.g. "Senior · 5-8 yrs"
 - redFlags: array of 3 short strings
 - idealBackground: array of 4 short strings
-- booleans: array of 3 objects each with "label" (short) and "string" (the boolean query, keep under 120 chars)
-- targetCompanies: array of 12 company name strings only
-- sourcingStrategy: array of 4 objects each with "title" (5 words max) and "detail" (1-2 sentences max, under 100 chars)
-- outreachMessage: single string, 3-4 sentences max, no placeholders in brackets, ready to send
+- booleans: array of 3 objects each with "label" and "string" (under 120 chars)
+- targetCompanies: array of 12 company name strings
+- sourcingStrategy: array of 4 objects each with "title" (5 words max) and "detail" (under 100 chars)
+- outreachMessage: single string, 3-4 sentences, ready to send
 
 JOB DESCRIPTION:
 ${jd}`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3 }
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'API error' });
+      return res.status(response.status).json({ error: data.error?.message || 'Gemini API error' });
     }
 
-    const raw = data.content.map(b => b.text || '').join('');
+    const raw = data.candidates[0].content.parts[0].text;
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
 
