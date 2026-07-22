@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JD Analyzer — AI Recruiting Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --surface2: #1a1e28;
+    --border: #252a38;
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --green: #3dd68c;
+    --amber: #f5a623;
+    --red: #f05252;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: rgba(13,15,20,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .logo span { color: var(--muted); font-weight: 400; }
+
+  header .badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 32px 48px;
+    max-width: 860px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 540px;
+    margin: 0 auto 40px;
+  }
+
+  /* INPUT SECTION */
+  .input-section {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px 48px;
+  }
+
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .input-card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 20px;
+    resize: none;
+    outline: none;
+    min-height: 220px;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .input-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .char-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .analyze-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+  }
+
+  .analyze-btn:hover { background: #3d7ef5; transform: translateY(-1px); }
+  .analyze-btn:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; transform: none; }
+
+  /* LOADING */
+  .loading {
+    display: none;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px 48px;
+  }
+
+  .loading.visible { display: block; }
+
+  .loading-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .loading-steps {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .loading-step {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .loading-step.active { opacity: 1; color: var(--green); }
+
+  /* RESULTS */
+  .results {
+    display: none;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .results.visible { display: flex; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .result-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .result-card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .tag.blue { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .tag.green { background: rgba(61,214,140,0.15); color: var(--green); }
+  .tag.amber { background: rgba(245,166,35,0.15); color: var(--amber); }
+  .tag.purple { background: rgba(124,92,191,0.15); color: var(--accent2); }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .result-card-body {
+    padding: 20px;
+  }
+
+  /* PROFILE GRID */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr; } }
+
+  .profile-block h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .profile-block ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .profile-block ul li {
+    font-size: 13px;
+    color: var(--text);
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .profile-block ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  /* BOOLEAN STRINGS */
+  .boolean-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .boolean-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .boolean-string {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  /* SOURCING STRATEGY */
+  .strategy-item {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strategy-item:last-child { border-bottom: none; }
+
+  .strategy-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 24px;
+    padding-top: 2px;
+  }
+
+  .strategy-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .strategy-content p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* COMPANIES */
+  .companies-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .company-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+
+  .company-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* OUTREACH */
+  .outreach-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: var(--text);
+  }
+
+  /* RESET */
+  .reset-row {
+    text-align: center;
+    padding-bottom: 20px;
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 32px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">jd<span>.</span>analyzer<span>()</span></div>
+  <div class="badge">● AI POWERED</div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">// recruiting intelligence tool</div>
+  <h1>Turn any Job Description into a<br><em>complete sourcing strategy</em></h1>
+  <p>Paste a JD. Get an ideal candidate profile, Boolean search strings, target companies, and a personalized outreach message — in seconds.</p>
+</div>
+
+<div class="input-section">
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <span style="margin-left:8px">paste_jd.txt</span>
+    </div>
+    <textarea id="jdInput" placeholder="Paste your job description here...
+
+Example: We're looking for a Senior Backend Engineer with 5+ years of experience in distributed systems, strong Golang skills, experience with Kubernetes and cloud platforms (AWS/GCP), and a track record of building high-availability systems at scale..." rows="10"></textarea>
+    <div class="input-footer">
+      <span class="char-count" id="charCount">0 characters</span>
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+        <span>⚡</span> Analyze JD
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-text">Analyzing your JD with AI...</div>
+    <div class="loading-steps">
+      <div class="loading-step" id="step1">→ Extracting role requirements</div>
+      <div class="loading-step" id="step2">→ Building ideal candidate profile</div>
+      <div class="loading-step" id="step3">→ Generating Boolean strings</div>
+      <div class="loading-step" id="step4">→ Mapping target companies</div>
+      <div class="loading-step" id="step5">→ Crafting sourcing strategy</div>
+    </div>
+  </div>
+</div>
+
+<div class="results" id="results">
+
+  <!-- IDEAL CANDIDATE PROFILE -->
+  <div class="result-card">
+    <div class="result-card-header">
+      <div class="result-card-title">
+        <span>👤</span> Ideal Candidate Profile
+        <span class="tag blue">PROFILE</span>
+      </div>
+      <button class="copy-btn" onclick="copySection('profileContent')">Copy</button>
+    </div>
+    <div class="result-card-body">
+      <div class="profile-grid" id="profileContent"></div>
+    </div>
+  </div>
+
+  <!-- BOOLEAN STRINGS -->
+  <div class="result-card">
+    <div class="result-card-header">
+      <div class="result-card-title">
+        <span>🔍</span> Boolean Search Strings
+        <span class="tag green">SEARCH</span>
+      </div>
+      <button class="copy-btn" onclick="copySection('booleanContent')">Copy all</button>
+    </div>
+    <div class="result-card-body" id="booleanContent"></div>
+  </div>
+
+  <!-- TARGET COMPANIES -->
+  <div class="result-card">
+    <div class="result-card-header">
+      <div class="result-card-title">
+        <span>🏢</span> Target Companies to Poach From
+        <span class="tag amber">TARGETS</span>
+      </div>
+      <button class="copy-btn" onclick="copySection('companiesContent')">Copy</button>
+    </div>
+    <div class="result-card-body">
+      <div class="companies-grid" id="companiesContent"></div>
+    </div>
+  </div>
+
+  <!-- SOURCING STRATEGY -->
+  <div class="result-card">
+    <div class="result-card-header">
+      <div class="result-card-title">
+        <span>🗺</span> Sourcing Strategy
+        <span class="tag purple">STRATEGY</span>
+      </div>
+      <button class="copy-btn" onclick="copySection('strategyContent')">Copy</button>
+    </div>
+    <div class="result-card-body" id="strategyContent"></div>
+  </div>
+
+  <!-- OUTREACH MESSAGE -->
+  <div class="result-card">
+    <div class="result-card-header">
+      <div class="result-card-title">
+        <span>✉️</span> Sample Outreach Message
+        <span class="tag blue">OUTREACH</span>
+      </div>
+      <button class="copy-btn" onclick="copySection('outreachContent')">Copy</button>
+    </div>
+    <div class="result-card-body">
+      <div class="outreach-box" id="outreachContent"></div>
+    </div>
+  </div>
+
+  <div class="reset-row">
+    <button class="reset-btn" onclick="reset()">← Analyze another JD</button>
+  </div>
+</div>
+
+<footer>
+  Built by <a href="https://linkedin.com/in/manjunath-h" target="_blank">Manjunath H.</a> · Technical Recruiter & AI Tools Builder ·
+  <a href="https://github.com/manjunath-h/jd-analyzer" target="_blank">github.com/manjunath-h/jd-analyzer</a> ·
+  <a href="https://jd-analyzer-six.vercel.app" target="_blank">jd-analyzer-six.vercel.app</a>
+</footer>
+
+<script>
+const textarea = document.getElementById('jdInput');
+function updateCount() {
+  document.getElementById('charCount').textContent = `${textarea.value.length} characters`;
+}
+textarea.addEventListener('input', updateCount);
+textarea.addEventListener('paste', () => setTimeout(updateCount, 100));
+textarea.addEventListener('keyup', updateCount);
+
+function showStep(n) {
+  document.getElementById(`step${n}`).classList.add('active');
+}
+
+async function analyze() {
+  const jd = textarea.value.trim();
+  if (!jd) {
+    alert('Please paste a job description (at least 50 characters).');
+    return;
+  }
+
+  // UI state
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('results').classList.remove('visible');
+
+  // Animate steps
+  let s = 1;
+  const stepTimer = setInterval(() => { if (s <= 5) showStep(s++); }, 900);
+
+
+
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jd })
+    });
+
+    const result = await response.json();
+    clearInterval(stepTimer);
+    for (let i = 1; i <= 5; i++) showStep(i);
+
+    if (!response.ok) throw new Error(result.error || 'API error');
+
+    renderResults(result);
+  } catch (err) {
+    clearInterval(stepTimer);
+    alert('Something went wrong. Please try again.');
+    console.error(err);
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('loading').classList.remove('visible');
+  }
+}
+
+function renderResults(r) {
+  // PROFILE
+  document.getElementById('profileContent').innerHTML = `
+    <div class="profile-block">
+      <h4>Must-Have Skills</h4>
+      <ul>${(r.mustHaveSkills||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="profile-block">
+      <h4>Nice to Have</h4>
+      <ul>${(r.niceToHaveSkills||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="profile-block">
+      <h4>Experience Level</h4>
+      <ul><li>${r.experienceLevel||''}</li></ul>
+    </div>
+    <div class="profile-block">
+      <h4>Ideal Background</h4>
+      <ul>${(r.idealBackground||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="profile-block" style="grid-column: 1/-1">
+      <h4>Disqualifiers / Red Flags</h4>
+      <ul>${(r.redFlags||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  // BOOLEAN
+  document.getElementById('booleanContent').innerHTML = (r.booleans||[]).map(b=>`
+    <div class="boolean-block">
+      <div class="boolean-label">${b.label}</div>
+      <div class="boolean-string">${b.string}</div>
+    </div>
+  `).join('');
+
+  // COMPANIES
+  document.getElementById('companiesContent').innerHTML = (r.targetCompanies||[]).map(c=>`
+    <div class="company-chip">${c}</div>
+  `).join('');
+
+  // STRATEGY
+  document.getElementById('strategyContent').innerHTML = `<div>${(r.sourcingStrategy||[]).map((s,i)=>`
+    <div class="strategy-item">
+      <div class="strategy-num">0${i+1}</div>
+      <div class="strategy-content">
+        <h4>${s.title}</h4>
+        <p>${s.detail}</p>
+      </div>
+    </div>
+  `).join('')}</div>`;
+
+  // OUTREACH
+  document.getElementById('outreachContent').textContent = r.outreachMessage || '';
+
+  // Show results
+  setTimeout(() => {
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('results').classList.add('visible');
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }, 600);
+}
+
+function copySection(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.closest('.result-card').querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = btn.textContent.includes('all') ? 'Copy all' : 'Copy', 1500);
+  });
+}
+
+function reset() {
+  document.getElementById('results').classList.remove('visible');
+  textarea.value = '';
+  document.getElementById('charCount').textContent = '0 characters';
+  document.querySelectorAll('.loading-step').forEach(s => s.classList.remove('active'));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
